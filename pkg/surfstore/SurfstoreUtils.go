@@ -6,6 +6,7 @@ import (
 	"strings"
 	"bufio"
 	"errors"
+
 )
 
 func reconstitute (client RPCClient, file *os.File, blockHashList []string, blockStoreAddr *string) {
@@ -19,7 +20,7 @@ func reconstitute (client RPCClient, file *os.File, blockHashList []string, bloc
 
 // Implement the logic for a client syncing with the server here.
 func ClientSync(client RPCClient) {
-
+    //fmt.Println("Client Syncing")
     //if index.txt doesn't exist
     _,err := os.Stat(ConcatPath(client.BaseDir,DEFAULT_META_FILENAME))
     if errors.Is(err, os.ErrNotExist){
@@ -67,13 +68,12 @@ func ClientSync(client RPCClient) {
 
         //if remote and local index has file record, but base directory doesn't (tombstone)
         if !b_ok && i_ok {
-
             indexFileMetaData := indexFileMetaMap[serverFileName]
             if indexFileMetaData.Version == serverFileMetaData.Version{
                 indexFileMetaData.Version += 1
                 indexFileMetaData.BlockHashList = emptyHashList
-                serverFileMetaData.Version += 1
-                serverFileMetaData.BlockHashList = emptyHashList
+                var latestVersion int32
+                client.UpdateFile(indexFileMetaData,&latestVersion)
             } else if indexFileMetaData.Version < serverFileMetaData.Version {
                 indexFileMetaMap[serverFileName] = serverFileMetaData
                 path := ConcatPath(client.BaseDir,serverFileName)
@@ -149,22 +149,22 @@ func ClientSync(client RPCClient) {
 
         //if file in local, but not in remote index
         indexFileMetaData = indexFileMetaMap[fileName]
-        var temp int32 = -1
-        latestVersion := &temp
+        //fmt.Println("indexFileMetaData:", indexFileMetaData)
+        client.GetFileInfoMap(serverFileMetaMap)
+        //fmt.Println("server map:", *serverFileMetaMap)
+        var latestVersion int32 = -1
 
-        client.UpdateFile(indexFileMetaData,latestVersion)
 
-        if *latestVersion == -1 {
+        client.UpdateFile(indexFileMetaData,&latestVersion)
+        //fmt.Println("latest ver:", latestVersion)
 
+        if latestVersion == -1 {
+            //fmt.Println("hi")
             client.GetFileInfoMap(serverFileMetaMap)
             indexFileMetaMap[fileName] = (*serverFileMetaMap)[fileName]
 
-            if err := os.Truncate(path, 0); err != nil {
-                log.Printf("Failed to truncate: %v", err)
-                continue
-            }
 
-            file, err := os.Open(path)
+            file, err := os.Create(path)
             if err != nil {
                 log.Printf("Error opening file")
                 continue
@@ -172,9 +172,22 @@ func ClientSync(client RPCClient) {
             serverFileMetaData := (*serverFileMetaMap)[fileName]
             reconstitute(client,file,serverFileMetaData.BlockHashList,blockStoreAddr)
 
-        } else {
-            client.GetFileInfoMap(serverFileMetaMap)
+//             for i:=0; i < len(serverFileMetaData.BlockHashList); i++ {
+//                 serverBH := serverFileMetaData.BlockHashList[i]
+//                 if (serverBH != blockHashList[i]){
+//                     offset := client.BlockSize * i
+//                     file.Seek(int64(offset),0)
+//                     block := &Block{}
+//                     client.GetBlock(serverBH,*blockStoreAddr,block)
+//                     file.Write(block.GetBlockData())
+//                 }
+//             }
+//             file.Close()
 
+
+        } else {
+
+            //fmt.Println("xd")
             for _, block := range blockList {
                 var temp bool = true
                 succ := &temp

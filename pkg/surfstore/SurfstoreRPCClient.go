@@ -96,7 +96,7 @@ func (surfClient *RPCClient) UpdateFile(fileMetaData *FileMetaData, latestVersio
 
     ver,_ := m.UpdateFile(ctx,fileMetaData)
     *latestVersion = ver.GetVersion()
-
+    //fmt.Println("RPC", ver)
     return conn.Close()
 }
 
