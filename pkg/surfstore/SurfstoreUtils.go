@@ -6,7 +6,6 @@ import (
 	"strings"
 	"bufio"
 	"errors"
-
 )
 
 func reconstitute (client RPCClient, file *os.File, blockHashList []string, blockStoreAddr *string, fileName string) {
@@ -137,9 +136,15 @@ func ClientSync(client RPCClient) {
 
         if !ok {
             indexFileMetaMap[fileName] = &FileMetaData{Filename: fileName, Version: 1, BlockHashList: blockHashList}
-        } else if ok  && indexFileMetaData.BlockHashList[0] == "0" {
-            indexFileMetaData.Version += 1
-            indexFileMetaData.BlockHashList = blockHashList
+        } else if ok  && len(indexFileMetaData.BlockHashList) > 0 && indexFileMetaData.BlockHashList[0] == "0" {
+            if indexFileMetaData.GetVersion() != (*serverFileMetaMap)[fileName].GetVersion(){
+                os.Remove(path)
+                indexFileMetaMap[fileName] = (*serverFileMetaMap)[fileName]
+                continue
+            } else {
+                indexFileMetaData.Version += 1
+                indexFileMetaData.BlockHashList = blockHashList
+            }
         } else {
             if len(blockHashList) != len(indexFileMetaData.BlockHashList) {
                 indexFileMetaData.BlockHashList = blockHashList
@@ -157,6 +162,7 @@ func ClientSync(client RPCClient) {
 
         //if file in local, but not in remote index
         indexFileMetaData = indexFileMetaMap[fileName]
+
         //fmt.Println("indexFileMetaData:", indexFileMetaData)
 
         var latestVersion int32 = -1
@@ -165,17 +171,24 @@ func ClientSync(client RPCClient) {
         //fmt.Println("latest ver:", latestVersion)
 
         if latestVersion == -1 {
-            //fmt.Println("hi")
             client.GetFileInfoMap(serverFileMetaMap)
-            indexFileMetaMap[fileName] = (*serverFileMetaMap)[fileName]
+            serverFileMetaData := (*serverFileMetaMap)[fileName]
 
+            //fmt.Println("hi")
+            if len(serverFileMetaData.BlockHashList) > 0 && serverFileMetaData.BlockHashList[0] == "0" && indexFileMetaData.GetVersion() != serverFileMetaData.GetVersion(){
+                os.Remove(path)
+                indexFileMetaMap[fileName] = (*serverFileMetaMap)[fileName]
+                continue
+            }
+
+            indexFileMetaMap[fileName] = (*serverFileMetaMap)[fileName]
 
             file, err := os.Create(path)
             if err != nil {
                 log.Printf("Error opening file")
                 continue
             }
-            serverFileMetaData := (*serverFileMetaMap)[fileName]
+
             reconstitute(client,file,serverFileMetaData.BlockHashList,blockStoreAddr,fileName)
 
 //             for i:=0; i < len(serverFileMetaData.BlockHashList); i++ {
