@@ -6,16 +6,14 @@ import (
 	"strings"
 	"bufio"
 	"errors"
-	"fmt"
+
 )
 
 func reconstitute (client RPCClient, file *os.File, blockHashList []string, blockStoreAddr *string, fileName string) {
     fileWriter := bufio.NewWriter(file)
     for _, blockHash := range blockHashList {
-        fmt.Println(fileName,"XD")
         block := &Block{}
         client.GetBlock(blockHash,*blockStoreAddr,block)
-        fmt.Println(block.BlockSize)
         fileWriter.Write(block.GetBlockData())
     }
     fileWriter.Flush()
