@@ -11,11 +11,13 @@ type ConsistentHashRing struct {
 }
 
 func (c ConsistentHashRing) InsertServer(addr string) {
-	panic("to do")
+	key := c.Hash(addr)
+	c.ServerMap[key] = addr
 }
 
 func (c ConsistentHashRing) DeleteServer(addr string) {
-	panic("to do")
+	key := c.Hash(addr)
+	delete(c.ServerMap,key)
 }
 
 func (c ConsistentHashRing) GetResponsibleServer(blockId string) string {

@@ -2,7 +2,6 @@ package surfstore
 
 import (
 	context "context"
-
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -13,15 +12,27 @@ type MetaStore struct {
 }
 
 func (m *MetaStore) GetFileInfoMap(ctx context.Context, _ *emptypb.Empty) (*FileInfoMap, error) {
-	panic("todo")
+
+	return &FileInfoMap{FileInfoMap: m.FileMetaMap}, nil
 }
 
 func (m *MetaStore) UpdateFile(ctx context.Context, fileMetaData *FileMetaData) (*Version, error) {
-	panic("todo")
+
+	currFilename := fileMetaData.Filename
+	pastFileMetaData,ok := m.FileMetaMap[currFilename]
+
+	if ok && pastFileMetaData.GetVersion() != fileMetaData.GetVersion() - 1 {
+	    return &Version{Version: -1},  fmt.Errorf("Incorrect version number")
+	} else {
+	    m.FileMetaMap[currFilename] = fileMetaData
+        return &Version{Version: fileMetaData.GetVersion()}, nil
+	}
+
 }
 
 func (m *MetaStore) GetBlockStoreAddr(ctx context.Context, _ *emptypb.Empty) (*BlockStoreAddr, error) {
-	panic("todo")
+
+	return &BlockStoreAddr{Addr: m.BlockStoreAddr}, nil
 }
 
 // This line guarantees all method for MetaStore are implemented

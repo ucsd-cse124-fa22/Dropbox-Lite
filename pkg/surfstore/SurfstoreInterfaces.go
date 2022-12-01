@@ -2,7 +2,6 @@ package surfstore
 
 import (
 	context "context"
-
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
