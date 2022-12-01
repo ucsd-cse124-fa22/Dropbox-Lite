@@ -6,7 +6,6 @@ import (
 	"strings"
 	"bufio"
 	"errors"
-
 )
 
 func reconstitute (client RPCClient, file *os.File, blockHashList []string, blockStoreAddr *string) {
@@ -138,11 +137,16 @@ func ClientSync(client RPCClient) {
             indexFileMetaData.Version += 1
             indexFileMetaData.BlockHashList = blockHashList
         } else {
-            for i := 0; i < len(blockHashList); i++ {
-                if blockHashList[i] != indexFileMetaData.BlockHashList[i] {
-                    indexFileMetaData.BlockHashList = blockHashList
-                    indexFileMetaData.Version += 1
-                    break;
+            if len(blockHashList) != len(indexFileMetaData.BlockHashList) {
+                indexFileMetaData.BlockHashList = blockHashList
+                indexFileMetaData.Version += 1
+            } else {
+                for i := 0; i < len(blockHashList); i++ {
+                    if blockHashList[i] != indexFileMetaData.BlockHashList[i] {
+                        indexFileMetaData.BlockHashList = blockHashList
+                        indexFileMetaData.Version += 1
+                        break;
+                    }
                 }
             }
         }
@@ -150,10 +154,8 @@ func ClientSync(client RPCClient) {
         //if file in local, but not in remote index
         indexFileMetaData = indexFileMetaMap[fileName]
         //fmt.Println("indexFileMetaData:", indexFileMetaData)
-        client.GetFileInfoMap(serverFileMetaMap)
-        //fmt.Println("server map:", *serverFileMetaMap)
-        var latestVersion int32 = -1
 
+        var latestVersion int32 = -1
 
         client.UpdateFile(indexFileMetaData,&latestVersion)
         //fmt.Println("latest ver:", latestVersion)
