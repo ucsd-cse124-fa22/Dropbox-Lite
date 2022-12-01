@@ -4,6 +4,8 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"strconv"
+	"strings"
+	"sort"
 )
 
 type ConsistentHashRing struct {
@@ -12,7 +14,7 @@ type ConsistentHashRing struct {
 
 func (c ConsistentHashRing) InsertServer(addr string) {
 	key := c.Hash(addr)
-	c.ServerMap[key] = addr
+	c.ServerMap[key] = strings.ReplaceAll(addr,"blockstore","")
 }
 
 func (c ConsistentHashRing) DeleteServer(addr string) {
@@ -22,7 +24,19 @@ func (c ConsistentHashRing) DeleteServer(addr string) {
 
 func (c ConsistentHashRing) GetResponsibleServer(blockId string) string {
 	// Find the next largest key from ServerMap
-	panic("to do")
+	blockIdHash := c.Hash(blockId)
+	var hashKeyArr []string
+	for hashKey,_ := range c.ServerMap {
+	    hashKeyArr = append(hashKeyArr,hashKey)
+	}
+	sort.Strings(hashKeyArr)
+
+	for _,hashKey := range hashKeyArr {
+	    if hashKey > blockIdHash {
+	        return c.ServerMap[hashKey]
+	    }
+	}
+	return c.ServerMap[hashKeyArr[0]]
 }
 
 func (c ConsistentHashRing) Hash(addr string) string {
@@ -46,11 +60,11 @@ func NewConsistentHashRing(numServers int, downServer []int) *ConsistentHashRing
 	}
 
 	for i := 0; i < numServers; i++ {
-		c.InsertServer("blockServer" + strconv.Itoa(i))
+		c.InsertServer("blockstore" + strconv.Itoa(i))
 	}
 
 	for i := 0; i < len(downServer); i++ {
-		c.DeleteServer("blockServer" + strconv.Itoa(downServer[i]))
+		c.DeleteServer("blockstore" + strconv.Itoa(downServer[i]))
 	}
 
 	return c
