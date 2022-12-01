@@ -6,14 +6,19 @@ import (
 	"strings"
 	"bufio"
 	"errors"
+	"fmt"
 )
 
-func reconstitute (client RPCClient, file *os.File, blockHashList []string, blockStoreAddr *string) {
+func reconstitute (client RPCClient, file *os.File, blockHashList []string, blockStoreAddr *string, fileName string) {
+    fileWriter := bufio.NewWriter(file)
     for _, blockHash := range blockHashList {
+        fmt.Println(fileName,"XD")
         block := &Block{}
         client.GetBlock(blockHash,*blockStoreAddr,block)
-        file.Write(block.GetBlockData())
+        fmt.Println(block.BlockSize)
+        fileWriter.Write(block.GetBlockData())
     }
+    fileWriter.Flush()
     file.Close()
 }
 
@@ -80,7 +85,7 @@ func ClientSync(client RPCClient) {
                 if err != nil {
                     continue
                 }
-                reconstitute(client,file,serverFileMetaData.BlockHashList,blockStoreAddr)
+                reconstitute(client,file,serverFileMetaData.BlockHashList,blockStoreAddr,serverFileName)
             }
         } else if !b_ok && !i_ok {
             indexFileMetaMap[serverFileName] = serverFileMetaData
@@ -90,7 +95,7 @@ func ClientSync(client RPCClient) {
             if err != nil {
                 continue
             }
-            reconstitute(client,file,serverFileMetaData.BlockHashList,blockStoreAddr)
+            reconstitute(client,file,serverFileMetaData.BlockHashList,blockStoreAddr,serverFileName)
         }
     }
 
@@ -115,10 +120,11 @@ func ClientSync(client RPCClient) {
         defer file.Close()
         fileReader := bufio.NewReader(file)
 
-        buf := make([]byte, client.BlockSize)
+
         var blockHashList []string
         var blockList []*Block
         for {
+            buf := make([]byte, client.BlockSize)
             n,err := fileReader.Read(buf)
             if err != nil {
                 break
@@ -172,7 +178,7 @@ func ClientSync(client RPCClient) {
                 continue
             }
             serverFileMetaData := (*serverFileMetaMap)[fileName]
-            reconstitute(client,file,serverFileMetaData.BlockHashList,blockStoreAddr)
+            reconstitute(client,file,serverFileMetaData.BlockHashList,blockStoreAddr,fileName)
 
 //             for i:=0; i < len(serverFileMetaData.BlockHashList); i++ {
 //                 serverBH := serverFileMetaData.BlockHashList[i]
