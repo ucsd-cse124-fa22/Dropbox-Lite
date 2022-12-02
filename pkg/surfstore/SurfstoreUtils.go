@@ -175,7 +175,7 @@ func ClientSync(client RPCClient) {
             serverFileMetaData := (*serverFileMetaMap)[fileName]
 
             //fmt.Println("hi")
-            if len(serverFileMetaData.BlockHashList) > 0 && serverFileMetaData.BlockHashList[0] == "0" && indexFileMetaData.GetVersion() != serverFileMetaData.GetVersion(){
+            if len(serverFileMetaData.BlockHashList) > 0 && serverFileMetaData.BlockHashList[0] == "0"{
                 os.Remove(path)
                 indexFileMetaMap[fileName] = (*serverFileMetaMap)[fileName]
                 continue
@@ -190,7 +190,6 @@ func ClientSync(client RPCClient) {
             }
 
             reconstitute(client,file,serverFileMetaData.BlockHashList,blockStoreAddr,fileName)
-
 //             for i:=0; i < len(serverFileMetaData.BlockHashList); i++ {
 //                 serverBH := serverFileMetaData.BlockHashList[i]
 //                 if (serverBH != blockHashList[i]){
@@ -202,10 +201,7 @@ func ClientSync(client RPCClient) {
 //                 }
 //             }
 //             file.Close()
-
-
         } else {
-
             //fmt.Println("xd")
             for _, block := range blockList {
                 var temp bool = true
