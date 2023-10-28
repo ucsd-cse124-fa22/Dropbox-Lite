@@ -5,9 +5,11 @@
 * gRPC
 * Protobuf
 
-## Techniques
+## Key Techniques
 * Block and meta servers
+* TCP protocol
+* Data buffering
 * Hashing
 * Consistent hashing
-* Data transfer between clients and server
+* RPC
   
